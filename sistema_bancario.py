@@ -5,7 +5,92 @@
 
 from datetime import datetime
 
+
+class Historico:
+    def __init__(self):
+        self.transacoes = []
+
+    def adicionar_transacao(self, tipo, valor):
+        self.transacoes.append({
+            "tipo": tipo,
+            "valor": valor,
+            "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        })
+
+    def exibir(self):
+        for transacao in self.transacoes:
+            print(
+                f"{transacao['data']} - {transacao['tipo']}: R$ {transacao['valor']:.2f}")
+
+
+class Conta:
+    def __init__(self, numero, cliente):
+        self.numero = numero
+        self.agencia = "0001"
+        self.cliente = cliente
+        self.saldo = 0
+        self.historico = Historico()
+
+    def sacar(self, valor):
+        if valor <= 0:
+            print("❌ Valor inválido para saque.")
+            return False
+        if valor > self.saldo:
+            print("❌ Saldo insuficiente.")
+            return False
+        self.saldo -= valor
+        self.historico.adicionar_transacao("Saque", valor)
+        print(f"✅ Saque de R$ {valor:.2f} realizado com sucesso.")
+        return True
+
+    def depositar(self, valor):
+        if valor <= 0:
+            print("❌ Valor inválido para depósito.")
+            return False
+        self.saldo += valor
+        self.historico.adicionar_transacao("Depósito", valor)
+        print(f"✅ Depósito de R$ {valor:.2f} realizado com sucesso.")
+        return True
+
+
+class Cliente:
+    def __init__(self, nome, cpf, endereco):
+        self.nome = nome
+        self.cpf = cpf
+        self.endereco = endereco
+        self.contas = []
+
+    def adicionar_conta(self, conta):
+        self.contas.append(conta)
+
+    def realizar_transacao(self, conta, transacao):
+        transacao.registrar(conta)
+
+
+class Transacao:
+    def registrar(self, conta):
+        raise NotImplementedError(
+            "Este método deve ser implementado nas subclasses.")
+
+
+class Saque(Transacao):
+    def __init__(self, valor):
+        self.valor = valor
+
+    def registrar(self, conta):
+        conta.sacar(self.valor)
+
+
+class Deposito(Transacao):
+    def __init__(self, valor):
+        self.valor = valor
+
+    def registrar(self, conta):
+        conta.depositar(self.valor)
+
+
 # ======== FUNÇÕES DE INTERFACE ========
+
 
 def menu():
     menu = """
@@ -24,6 +109,7 @@ def menu():
     return input(menu).lower()
 
 # ======== FUNÇÕES BANCÁRIAS ========
+
 
 def depositar(saldo, valor, extrato, /):
     if valor > 0:
@@ -67,8 +153,10 @@ def transferir(contas, extrato):
     origem = input("Informe o número da conta de origem: ")
     destino = input("Informe o número da conta de destino: ")
 
-    conta_origem = next((c for c in contas if str(c["numero_conta"]) == origem), None)
-    conta_destino = next((c for c in contas if str(c["numero_conta"]) == destino), None)
+    conta_origem = next(
+        (c for c in contas if str(c["numero_conta"]) == origem), None)
+    conta_destino = next(
+        (c for c in contas if str(c["numero_conta"]) == destino), None)
 
     if not conta_origem or not conta_destino:
         print("❌ Conta de origem ou destino não encontrada!")
@@ -107,7 +195,8 @@ def criar_usuario(usuarios):
 
     nome = input("Informe o nome completo: ")
     data_nascimento = input("Informe a data de nascimento (dd/mm/aaaa): ")
-    endereco = input("Informe o endereço (logradouro, nº - bairro - cidade/UF): ")
+    endereco = input(
+        "Informe o endereço (logradouro, nº - bairro - cidade/UF): ")
 
     usuarios.append({
         "nome": nome,
@@ -120,7 +209,8 @@ def criar_usuario(usuarios):
 
 
 def filtrar_usuario(cpf, usuarios):
-    usuarios_filtrados = [usuario for usuario in usuarios if usuario["cpf"] == cpf]
+    usuarios_filtrados = [
+        usuario for usuario in usuarios if usuario["cpf"] == cpf]
     return usuarios_filtrados[0] if usuarios_filtrados else None
 
 
@@ -193,17 +283,20 @@ def main():
 
         if opcao == "d":
             numero_conta = input("Informe o número da conta para depósito: ")
-            conta = next((c for c in contas if str(c["numero_conta"]) == numero_conta), None)
+            conta = next((c for c in contas if str(
+                c["numero_conta"]) == numero_conta), None)
 
             if conta:
                 valor = float(input("Informe o valor do depósito: R$ "))
-                conta["saldo"], conta["extrato"] = depositar(conta["saldo"], valor, conta["extrato"])
+                conta["saldo"], conta["extrato"] = depositar(
+                    conta["saldo"], valor, conta["extrato"])
             else:
                 print("❌ Conta não encontrada.")
 
         elif opcao == "s":
             numero_conta = input("Informe o número da conta para saque: ")
-            conta = next((c for c in contas if str(c["numero_conta"]) == numero_conta), None)
+            conta = next((c for c in contas if str(
+                c["numero_conta"]) == numero_conta), None)
 
             if conta:
                 valor = float(input("Informe o valor do saque: R$ "))
@@ -219,8 +312,10 @@ def main():
                 print("❌ Conta não encontrada.")
 
         elif opcao == "e":
-            numero_conta = input("Informe o número da conta para ver o extrato: ")
-            conta = next((c for c in contas if str(c["numero_conta"]) == numero_conta), None)
+            numero_conta = input(
+                "Informe o número da conta para ver o extrato: ")
+            conta = next((c for c in contas if str(
+                c["numero_conta"]) == numero_conta), None)
 
             if conta:
                 exibir_extrato(conta["saldo"], extrato=conta["extrato"])
